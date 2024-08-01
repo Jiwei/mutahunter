@@ -3,7 +3,7 @@ from typing import List, Optional
 
 
 @dataclass
-class MutationTestControllerConfig:
+class MutatorConfig:
     model: str
     api_base: str
     test_command: str
@@ -11,7 +11,8 @@ class MutationTestControllerConfig:
     coverage_type: str
     exclude_files: List[str]
     only_mutate_file_paths: List[str]
-    diff: bool
+    modified_files_only: bool
+    extreme: bool
 
 
 @dataclass

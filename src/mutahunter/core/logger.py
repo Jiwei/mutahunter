@@ -30,6 +30,10 @@ def setup_logger(name):
     logger.addHandler(stream_handler)
     logger.setLevel(logging.INFO)
 
+    os.makedirs('logs', exist_ok=True)
+    os.makedirs('logs/_latest', exist_ok=True)
+    os.makedirs('logs/_latest/mutants', exist_ok=True)
+    
     return logger
 
 

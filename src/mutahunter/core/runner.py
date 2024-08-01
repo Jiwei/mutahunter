@@ -4,7 +4,7 @@ import subprocess
 from shlex import split
 
 
-class MutantTestRunner:
+class TestRunner:
     def __init__(self, test_command):
         self.test_command = test_command
 
