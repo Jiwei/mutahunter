@@ -8,6 +8,7 @@ from typing import Any, List
 
 from mutahunter.core.entities.mutant import Mutant
 from mutahunter.core.logger import logger
+import os
 
 MUTAHUNTER_ASCII = r"""
 .  . . . .-. .-. . . . . . . .-. .-. .-. 
@@ -214,7 +215,7 @@ class MutantReport:
             text (str): The text to log and write.
         """
         logger.info(text)
-        with open(self.log_file, "a") as file:
+        with open(self.log_file, "w") as file:
             file.write(text + "\n")
 
     def save_report(self, filepath: str, data: Any) -> None:
@@ -225,6 +226,8 @@ class MutantReport:
             filepath (str): The path to the file where the data should be saved.
             data (Any): The data to be saved.
         """
+        import os
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(data, f, indent=4)
         logger.info(f"Report saved to {filepath}")
