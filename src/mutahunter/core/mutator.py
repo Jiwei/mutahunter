@@ -140,12 +140,17 @@ class Mutator:
             self.logger.info("Starting Coverage Analysis...")
             self.test_runner.dry_run()
             self.coverage_processor.parse_coverage_report()
-            if self.config.modified_files_only:
+            if self.config.only_mutate_file_paths:
+                self.logger.info("Running mutation testing on specific files...")
+                for item in self.config.only_mutate_file_paths:
+                    self.logger.info(item)
+                self.run_mutation_testing(is_specified=True)
+            elif self.config.modified_files_only:
                 self.logger.info("Running mutation testing on modified files...")
                 self.run_mutation_testing_on_modified_files()
             else:
                 self.logger.info("Running mutation testing on entire codebase...")
-                self.run_mutation_testing()
+                self.run_mutation_testing(is_specified=False)
 
             self.mutant_report.generate_report(
                 mutants=self.mutants,
@@ -169,15 +174,15 @@ class Mutator:
         Determines if a file should be skipped based on various conditions.
         """
         self.logger.info(f"Checking if file should be skipped: {filename}")
-        if self.config.only_mutate_file_paths:
-            for file_path in self.config.only_mutate_file_paths:
-                if not os.path.exists(file_path):
-                    self.logger.error(f"File {file_path} does not exist.")
-                    raise FileNotFoundError(f"File {file_path} does not exist.")
-            return all(
-                file_path != filename
-                for file_path in self.config.only_mutate_file_paths
-            )
+        # if self.config.only_mutate_file_paths:
+        #     for file_path in self.config.only_mutate_file_paths:
+        #         if not os.path.exists(file_path):
+        #             self.logger.error(f"File {file_path} does not exist.")
+        #             raise FileNotFoundError(f"File {file_path} does not exist.")
+        #     return all(
+        #         file_path != filename
+        #         for file_path in self.config.only_mutate_file_paths
+        #     )
         if filename in self.config.exclude_files:
             return True
 
@@ -186,15 +191,21 @@ class Mutator:
             f"File {filename} {'is' if should_skip else 'is not'} identified as a test file."
         )
         return should_skip
-
-    def run_mutation_testing(self) -> None:
-        self.logger.info("Running mutation testing on the entire codebase.")
-        all_covered_files = self.coverage_processor.file_lines_executed.keys()
+            
+    def run_mutation_testing(self, is_specified: bool) -> None:
+        if is_specified:
+            for file_path in self.config.only_mutate_file_paths:
+                if not os.path.exists(file_path):
+                    self.logger.error(f"File {file_path} does not exist.")
+                    raise FileNotFoundError(f"File {file_path} does not exist.")
+            target_files=self.config.only_mutate_file_paths
+        else:
+            target_files = self.coverage_processor.file_lines_executed.keys()
         self.logger.info(
-            f"Generating mutations for {len(all_covered_files)} covered files."
+            f"Generating mutations for {len(target_files)} target files."
         )
 
-        for covered_file_path in tqdm(all_covered_files):
+        for covered_file_path in tqdm(target_files):
             if self.should_skip_file(covered_file_path):
                 self.logger.info(f"Skipping file: {covered_file_path}")
                 continue
@@ -307,6 +318,7 @@ class Mutator:
             source_file_path=mutant.source_path,
             source_code=modified_byte_code.decode("utf-8"),
         ):
+            os.makedirs(os.path.dirname(mutant_path), exist_ok=True)
             with open(mutant_path, "wb") as f:
                 f.write(modified_byte_code)
             self.logger.debug(f"Mutant file prepared: {mutant_path}")
